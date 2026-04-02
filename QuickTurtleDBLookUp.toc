@@ -4,6 +4,5 @@
 ## Author: Taeko
 ## Version: 1.0
 ## SavedVariables: QuickTurtleDBLookUpDB
-## RequiredDeps: SuperWoW
-## OptionalDeps: pfUI, LunaUnitFrames, XPerl, SUF, DUF, DiscordUnitFrames
+## OptionalDeps: SuperWoW, SuperAPI, pfUI, LunaUnitFrames, XPerl, SUF, DUF, DiscordUnitFrames
 QuickTurtleDBLookUp.lua
