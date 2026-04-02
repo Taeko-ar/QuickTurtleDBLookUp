@@ -1,7 +1,7 @@
 ## Interface: 11200
 ## Title: QuickTurtleDBLookUp
 ## Notes: Right-click target frame to look up an NPC in the Turtle WoW Database.
-## Author: QuickTurtle
+## Author: Taeko
 ## Version: 1.0
 ## SavedVariables: QuickTurtleDBLookUpDB
 ## RequiredDeps: SuperWoW
