@@ -204,21 +204,42 @@ UIDropDownMenu_Initialize(QTD_DropDown, function()
     UIDropDownMenu_AddButton(info)
 end, "MENU")
 
-local function AttemptHookUIFrame(fNameOrObj)
+local function AttemptHookUIFrame(fNameOrObj, isExplicitTargetFrame)
     local f = fNameOrObj
     if type(f) == "string" then
         f = getglobal(f)
     end
     
     if f and type(f) == "table" and not f.QuickTurtleDBHooked then
+        local function TriggerIfValid(frame, btn)
+            if not QuickTurtleDBLookUpDB or not QuickTurtleDBLookUpDB.enabled then return end
+            if btn ~= "RightButton" then return end
+            if not UnitExists("target") or UnitIsPlayer("target") then return end
+
+            local isValid = isExplicitTargetFrame
+            if not isValid and frame then
+                if frame.unit == "target" then
+                    isValid = true
+                elseif frame.unit == nil then
+                    local name = frame.GetName and frame:GetName()
+                    name = name and string.lower(name) or ""
+                    if string.find(name, "target") then
+                        isValid = true
+                    end
+                end
+            end
+
+            if isValid then
+                ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
+            end
+        end
+
         if f:HasScript("OnClick") then
             local oldClick = f:GetScript("OnClick")
             f:SetScript("OnClick", function(a1, a2, a3)
                 if oldClick then oldClick(a1, a2, a3) end
                 local btn = arg1 or a1
-                if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and btn == "RightButton" and UnitExists("target") and not UnitIsPlayer("target") then
-                    ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
-                end
+                TriggerIfValid(this, btn)
             end)
             f.QuickTurtleDBHooked = true
         elseif f:HasScript("OnMouseUp") then
@@ -226,9 +247,7 @@ local function AttemptHookUIFrame(fNameOrObj)
             f:SetScript("OnMouseUp", function(a1, a2, a3)
                 if oldMouseUp then oldMouseUp(a1, a2, a3) end
                 local btn = arg1 or a1
-                if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and btn == "RightButton" and UnitExists("target") and not UnitIsPlayer("target") then
-                    ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
-                end
+                TriggerIfValid(this, btn)
             end)
             f.QuickTurtleDBHooked = true
         end
@@ -294,14 +313,14 @@ frame:SetScript("OnEvent", function()
     elseif event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_TARGET_CHANGED" then
         local frames = {"pfTarget", "LunaTargetFrame", "XPerl_Target", "SUFUnittarget", "DUF_TargetFrame", "DiscordUnitFrame2", "TargetFrame"}
         for _, name in pairs(frames) do
-            AttemptHookUIFrame(name)
+            AttemptHookUIFrame(name, true)
         end
         
         -- Universal UI Hook: Dynamically catch any unknown custom frames that register via standard click-casting API
         if ClickCastFrames then
             for clickFrame, _ in pairs(ClickCastFrames) do
                 if clickFrame and not clickFrame.QuickTurtleDBHooked then
-                    AttemptHookUIFrame(clickFrame)
+                    AttemptHookUIFrame(clickFrame, false)
                 end
             end
         end
