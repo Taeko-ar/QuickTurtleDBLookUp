@@ -16,6 +16,17 @@ Because the base Vanilla 1.12 client does not natively expose precise NPC IDs to
 4. A popup window will appear on your screen containing a direct link to the NPC on `https://database.turtlecraft.gg`.
 5. The URL text is automatically highlighted, so you can instantly press `Ctrl+C` to copy it and paste it into your browser.
 
+## Commands
+
+- `/qdb` - Force a database lookup on your current target via chat instead of using the right-click menu.
+- `/qdb toggle` - Enable or disable the addon.
+- `/qdb debug` - Toggles the debug mode.
+- `/qdb help` - Shows a list of available slash commands.
+
+## Translations
+
+This plugin has translations and support for Spanish and Portuguese. (Aprende ingles porrito lpm)
+
 ## Supported Unitframes
 
 The right-click context menu seamlessly intercepts interaction for most commonly used Vanilla / Turtle WoW Unitframe addons natively:
@@ -27,11 +38,3 @@ The right-click context menu seamlessly intercepts interaction for most commonly
 - **DiscordUnitFrames** (`DUF_TargetFrame`)
 
 *Note: The addon also explicitly hooks into the overarching `ClickCastFrames` API protocol, granting it universal out-of-the-box compatibility with almost any obscure or custom unit frame addon that interacts cleanly with the Vanilla ecosystem*
-
-
-## Commands
-
-- `/qdb` - Force a database lookup on your current target via chat instead of using the right-click menu.
-- `/qdb toggle` - Enable or disable the addon.
-- `/qdb debug` - Toggles the debug mode.
-- `/qdb help` - Shows a list of available slash commands.
