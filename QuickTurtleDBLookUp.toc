@@ -2,7 +2,7 @@
 ## Title: QuickTurtleDBLookUp
 ## Notes: Right-click target frame to look up an NPC in the Turtle WoW Database.
 ## Author: Taeko
-## Version: 1.0
+## Version: 1.0.1
 ## SavedVariables: QuickTurtleDBLookUpDB
 ## OptionalDeps: SuperWoW, SuperAPI, pfUI, LunaUnitFrames, XPerl, SUF, DUF, DiscordUnitFrames
 QuickTurtleDBLookUp.lua
