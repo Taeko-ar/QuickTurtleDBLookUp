@@ -320,6 +320,30 @@ function SetItemRef(link, text, button)
     end
 end
 
+local old_ContainerFrameItemButton_OnClick = ContainerFrameItemButton_OnClick
+if ContainerFrameItemButton_OnClick then
+    function ContainerFrameItemButton_OnClick(button, ignoreShift)
+        if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and button == "RightButton" and IsControlKeyDown() then
+            local bag = this:GetParent():GetID()
+            local slot = this:GetID()
+            local link = GetContainerItemLink(bag, slot)
+            if link then
+                local _, _, itemId = string.find(link, "item:(%d+)")
+                local _, _, itemName = string.find(link, "%[(.+)%]")
+                if itemId and itemName then
+                    QuickTurtleDBLookUp_CurrentType = "item"
+                    QuickTurtleDBLookUp_CurrentID = tonumber(itemId)
+                    QuickTurtleDBLookUp_CurrentName = itemName
+                    ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
+                end
+            end
+            return
+        end
+        if old_ContainerFrameItemButton_OnClick then
+            old_ContainerFrameItemButton_OnClick(button, ignoreShift)
+        end
+    end
+end
 
 SLASH_QUICKTURTLEDBLOOKUP1 = "/qdb"
 SLASH_QUICKTURTLEDBLOOKUP2 = "/turtledb"
