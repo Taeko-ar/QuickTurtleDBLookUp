@@ -2,7 +2,7 @@
 ## Title: QuickTurtleDBLookUp
 ## Notes: Right-click frame/inventory or chat links to look up NPCs, Items, Quests, and Spells in the Turtle WoW Database.
 ## Author: Taeko
-## Version: 1.0.4
+## Version: 1.0.5
 ## SavedVariables: QuickTurtleDBLookUpDB
 ## OptionalDeps: SuperWoW, SuperAPI, pfUI, LunaUnitFrames, XPerl, SUF, DUF, DiscordUnitFrames
 QuickTurtleDBLookUp.lua

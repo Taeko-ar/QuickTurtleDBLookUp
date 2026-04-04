@@ -11,7 +11,7 @@ Because the base Vanilla 1.12 client does not natively expose precise NPC IDs to
 ## How it Works
 
 1. Target an NPC, find an Item/Quest/Spell Link in the chat, or open your inventory bags.
-2. **Right-click** an NPC target frame, **Right-click** a chat link natively, or **Ctrl+Right-Click** any inventory item.
+2. **Right-click** an NPC target frame, **Ctrl+Right-Click** a chat link, or **Ctrl+Right-Click** any inventory item.
 3. A small dropdown context menu will appear by your cursor. Click **TurtleDB Lookup**.
 4. A popup window will appear on your screen containing a direct link to the NPC or Item on `https://database.turtlecraft.gg`.
 5. The URL text is automatically highlighted, so you can instantly press `Ctrl+C` to copy it and paste it into your browser.

@@ -336,7 +336,7 @@ end
 
 local old_SetItemRef = SetItemRef
 function SetItemRef(link, text, button)
-    if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and button == "RightButton" then
+    if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and button == "RightButton" and IsControlKeyDown() then
         if string.sub(link, 1, 4) == "item" then
             local _, _, itemId = string.find(link, "^item:(%d+)")
             local _, _, itemName = string.find(text, "%[(.+)%]")
