@@ -85,6 +85,14 @@ local function DebugMsg(msg)
     end
 end
 
+local function URLEncode(str)
+    if not str then return "" end
+    str = string.gsub(str, " ", "+")
+    -- Basic encoding for some common non-ASCII/special chars if needed,
+    -- but for most DBs '+' for space is the main requirement.
+    return str
+end
+
 StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"] = {
     text = L["NPC_NO_ID"],
     button1 = L["CLOSE"],
@@ -92,24 +100,29 @@ StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"] = {
     OnShow = function()
         local editBox = getglobal(this:GetName().."EditBox")
         if editBox then
-            local url
-            local lookupType = QuickTurtleDBLookUp_CurrentType or "npc"
-            local currentID = QuickTurtleDBLookUp_CurrentID
+            local data = this.data
+            local url = "https://database.turtlecraft.gg/"
+            local lookupType = data and data.type or "npc"
+            local currentID = data and data.id
+            local currentName = data and data.name or ""
+
+            DebugMsg("Popup OnShow - Type: " .. tostring(lookupType) .. ", ID: " .. tostring(currentID))
             
             if currentID and currentID ~= "Unknown" then
                 if lookupType == "item" then
-                    url = "https://database.turtlecraft.gg/?item=" .. tostring(currentID)
+                    url = url .. "?item=" .. tostring(currentID)
                 elseif lookupType == "quest" then
-                    url = "https://database.turtlecraft.gg/?quest=" .. tostring(currentID)
+                    url = url .. "?quest=" .. tostring(currentID)
                 elseif lookupType == "spell" then
-                    url = "https://database.turtlecraft.gg/?spell=" .. tostring(currentID)
+                    url = url .. "?spell=" .. tostring(currentID)
                 else
-                    url = "https://database.turtlecraft.gg/?npc=" .. tostring(currentID)
+                    url = url .. "?npc=" .. tostring(currentID)
                 end
             else
-                local nameForUrl = string.gsub(QuickTurtleDBLookUp_CurrentName or "", " ", "+")
-                url = "https://database.turtlecraft.gg/?search=" .. nameForUrl
+                url = url .. "?search=" .. URLEncode(currentName)
             end
+
+            DebugMsg("Generated URL: " .. url)
             editBox:SetText(url)
             editBox:HighlightText()
             editBox:SetFocus()
@@ -218,6 +231,8 @@ function QuickTurtleDBLookUp_ShowPopup()
         QuickTurtleDBLookUp_CurrentName = name
     end
     
+    local popupData = { id = id, type = lookupType, name = name }
+
     if id ~= "Unknown" then
         if lookupType == "item" then
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["ITEM_WITH_ID"]
@@ -228,7 +243,7 @@ function QuickTurtleDBLookUp_ShowPopup()
         else
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_WITH_ID"]
         end
-        StaticPopup_Show("QUICK_TURTLE_DB_LOOKUP", name, id)
+        StaticPopup_Show("QUICK_TURTLE_DB_LOOKUP", name, id, popupData)
     else
         if lookupType == "item" then
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["ITEM_NO_ID"]
@@ -239,7 +254,7 @@ function QuickTurtleDBLookUp_ShowPopup()
         else
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_NO_ID"]
         end
-        StaticPopup_Show("QUICK_TURTLE_DB_LOOKUP", name)
+        StaticPopup_Show("QUICK_TURTLE_DB_LOOKUP", name, nil, popupData)
     end
     
     PrintMsg(L["OPENED_LINK"] .. tostring(name))
@@ -337,9 +352,11 @@ end
 local old_SetItemRef = SetItemRef
 function SetItemRef(link, text, button)
     if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and button == "RightButton" and IsControlKeyDown() then
+        DebugMsg("SetItemRef called for: " .. tostring(link))
         if string.sub(link, 1, 4) == "item" then
             local _, _, itemId = string.find(link, "^item:(%d+)")
             local _, _, itemName = string.find(text, "%[(.+)%]")
+            DebugMsg("Extracted Item ID: " .. tostring(itemId) .. ", Name: " .. tostring(itemName))
             QuickTurtleDBLookUp_CurrentType = "item"
             QuickTurtleDBLookUp_CurrentID = tonumber(itemId)
             QuickTurtleDBLookUp_CurrentName = itemName or "Unknown Item"
@@ -348,6 +365,7 @@ function SetItemRef(link, text, button)
         elseif string.sub(link, 1, 5) == "quest" then
             local _, _, questId = string.find(link, "^quest:(%d+)")
             local _, _, questName = string.find(text, "%[(.+)%]")
+            DebugMsg("Extracted Quest ID: " .. tostring(questId) .. ", Name: " .. tostring(questName))
             QuickTurtleDBLookUp_CurrentType = "quest"
             QuickTurtleDBLookUp_CurrentID = tonumber(questId)
             QuickTurtleDBLookUp_CurrentName = questName or "Unknown Quest"
@@ -356,6 +374,7 @@ function SetItemRef(link, text, button)
         elseif string.sub(link, 1, 5) == "spell" then
             local _, _, spellId = string.find(link, "^spell:(%d+)")
             local _, _, spellName = string.find(text, "%[(.+)%]")
+            DebugMsg("Extracted Spell ID: " .. tostring(spellId) .. ", Name: " .. tostring(spellName))
             QuickTurtleDBLookUp_CurrentType = "spell"
             QuickTurtleDBLookUp_CurrentID = tonumber(spellId)
             QuickTurtleDBLookUp_CurrentName = spellName or "Unknown Spell"
@@ -364,6 +383,7 @@ function SetItemRef(link, text, button)
         elseif string.sub(link, 1, 7) == "enchant" then
             local _, _, enchantId = string.find(link, "^enchant:(%d+)")
             local _, _, enchantName = string.find(text, "%[(.+)%]")
+            DebugMsg("Extracted Enchant ID: " .. tostring(enchantId) .. ", Name: " .. tostring(enchantName))
             QuickTurtleDBLookUp_CurrentType = "spell"
             QuickTurtleDBLookUp_CurrentID = tonumber(enchantId)
             QuickTurtleDBLookUp_CurrentName = enchantName or "Unknown Enchant"
@@ -383,9 +403,11 @@ if ContainerFrameItemButton_OnClick then
             local bag = this:GetParent():GetID()
             local slot = this:GetID()
             local link = GetContainerItemLink(bag, slot)
+            DebugMsg("ContainerClick - Bag: " .. tostring(bag) .. ", Slot: " .. tostring(slot))
             if link then
                 local _, _, itemId = string.find(link, "item:(%d+)")
                 local _, _, itemName = string.find(link, "%[(.+)%]")
+                DebugMsg("Container Extracted - Item ID: " .. tostring(itemId) .. ", Name: " .. tostring(itemName))
                 if itemId and itemName then
                     QuickTurtleDBLookUp_CurrentType = "item"
                     QuickTurtleDBLookUp_CurrentID = tonumber(itemId)
