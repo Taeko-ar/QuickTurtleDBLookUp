@@ -10,6 +10,8 @@ local L = {
     ["NPC_WITH_ID"] = "NPC: %s (ID: %s)",
     ["ITEM_NO_ID"] = "Item: %s",
     ["ITEM_WITH_ID"] = "Item: %s (ID: %s)",
+    ["QUEST_NO_ID"] = "Quest: %s",
+    ["QUEST_WITH_ID"] = "Quest: %s (ID: %s)",
     ["CLOSE"] = "Close",
     ["ENABLED"] = "Enabled.",
     ["DISABLED"] = "Disabled.",
@@ -30,6 +32,8 @@ if GetLocale() == "esES" or GetLocale() == "esMX" then
     L["NPC_WITH_ID"] = "PNJ: %s (ID: %s)"
     L["ITEM_NO_ID"] = "Objeto: %s"
     L["ITEM_WITH_ID"] = "Objeto: %s (ID: %s)"
+    L["QUEST_NO_ID"] = "Misión: %s"
+    L["QUEST_WITH_ID"] = "Misión: %s (ID: %s)"
     L["CLOSE"] = "Cerrar"
     L["ENABLED"] = "Activado."
     L["DISABLED"] = "Desactivado."
@@ -48,6 +52,8 @@ elseif GetLocale() == "ptBR" or GetLocale() == "ptPT" then
     L["NPC_WITH_ID"] = "NPC: %s (ID: %s)"
     L["ITEM_NO_ID"] = "Item: %s"
     L["ITEM_WITH_ID"] = "Item: %s (ID: %s)"
+    L["QUEST_NO_ID"] = "Missão: %s"
+    L["QUEST_WITH_ID"] = "Missão: %s (ID: %s)"
     L["CLOSE"] = "Fechar"
     L["ENABLED"] = "Ativado."
     L["DISABLED"] = "Desativado."
@@ -87,6 +93,8 @@ StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"] = {
             if currentID and currentID ~= "Unknown" then
                 if lookupType == "item" then
                     url = "https://database.turtlecraft.gg/?item=" .. tostring(currentID)
+                elseif lookupType == "quest" then
+                    url = "https://database.turtlecraft.gg/?quest=" .. tostring(currentID)
                 else
                     url = "https://database.turtlecraft.gg/?npc=" .. tostring(currentID)
                 end
@@ -164,6 +172,9 @@ function QuickTurtleDBLookUp_ShowPopup()
     if lookupType == "item" then
         id = QuickTurtleDBLookUp_CurrentID or "Unknown"
         name = QuickTurtleDBLookUp_CurrentName or "Unknown Item"
+    elseif lookupType == "quest" then
+        id = QuickTurtleDBLookUp_CurrentID or "Unknown"
+        name = QuickTurtleDBLookUp_CurrentName or "Unknown Quest"
     else
         if not UnitExists("target") then 
             DebugMsg("No target exists")
@@ -199,6 +210,8 @@ function QuickTurtleDBLookUp_ShowPopup()
     if id ~= "Unknown" then
         if lookupType == "item" then
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["ITEM_WITH_ID"]
+        elseif lookupType == "quest" then
+            StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["QUEST_WITH_ID"]
         else
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_WITH_ID"]
         end
@@ -206,6 +219,8 @@ function QuickTurtleDBLookUp_ShowPopup()
     else
         if lookupType == "item" then
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["ITEM_NO_ID"]
+        elseif lookupType == "quest" then
+            StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["QUEST_NO_ID"]
         else
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_NO_ID"]
         end
@@ -218,8 +233,8 @@ end
 local QTD_DropDown = CreateFrame("Frame", "QuickTurtleDBLookUp_DropDown", UIParent, "UIDropDownMenuTemplate")
 UIDropDownMenu_Initialize(QTD_DropDown, function()
     local info = {}
-    if QuickTurtleDBLookUp_CurrentType == "item" then
-        info.text = QuickTurtleDBLookUp_CurrentName or "Unknown Item"
+    if QuickTurtleDBLookUp_CurrentType == "item" or QuickTurtleDBLookUp_CurrentType == "quest" then
+        info.text = QuickTurtleDBLookUp_CurrentName or "Unknown"
     else
         info.text = UnitName("target") or "Unknown"
     end
@@ -306,14 +321,24 @@ end
 
 local old_SetItemRef = SetItemRef
 function SetItemRef(link, text, button)
-    if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and button == "RightButton" and string.sub(link, 1, 4) == "item" then
-        local _, _, itemId = string.find(link, "^item:(%d+)")
-        local _, _, itemName = string.find(text, "%[(.+)%]")
-        QuickTurtleDBLookUp_CurrentType = "item"
-        QuickTurtleDBLookUp_CurrentID = tonumber(itemId)
-        QuickTurtleDBLookUp_CurrentName = itemName or "Unknown Item"
-        ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
-        return
+    if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and button == "RightButton" then
+        if string.sub(link, 1, 4) == "item" then
+            local _, _, itemId = string.find(link, "^item:(%d+)")
+            local _, _, itemName = string.find(text, "%[(.+)%]")
+            QuickTurtleDBLookUp_CurrentType = "item"
+            QuickTurtleDBLookUp_CurrentID = tonumber(itemId)
+            QuickTurtleDBLookUp_CurrentName = itemName or "Unknown Item"
+            ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
+            return
+        elseif string.sub(link, 1, 5) == "quest" then
+            local _, _, questId = string.find(link, "^quest:(%d+)")
+            local _, _, questName = string.find(text, "%[(.+)%]")
+            QuickTurtleDBLookUp_CurrentType = "quest"
+            QuickTurtleDBLookUp_CurrentID = tonumber(questId)
+            QuickTurtleDBLookUp_CurrentName = questName or "Unknown Quest"
+            ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
+            return
+        end
     end
     if old_SetItemRef then
         old_SetItemRef(link, text, button)
