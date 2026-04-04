@@ -12,6 +12,8 @@ local L = {
     ["ITEM_WITH_ID"] = "Item: %s (ID: %s)",
     ["QUEST_NO_ID"] = "Quest: %s",
     ["QUEST_WITH_ID"] = "Quest: %s (ID: %s)",
+    ["SPELL_NO_ID"] = "Spell/Enchant: %s",
+    ["SPELL_WITH_ID"] = "Spell/Enchant: %s (ID: %s)",
     ["CLOSE"] = "Close",
     ["ENABLED"] = "Enabled.",
     ["DISABLED"] = "Disabled.",
@@ -34,6 +36,8 @@ if GetLocale() == "esES" or GetLocale() == "esMX" then
     L["ITEM_WITH_ID"] = "Objeto: %s (ID: %s)"
     L["QUEST_NO_ID"] = "Misión: %s"
     L["QUEST_WITH_ID"] = "Misión: %s (ID: %s)"
+    L["SPELL_NO_ID"] = "Hechizo/Encantamiento: %s"
+    L["SPELL_WITH_ID"] = "Hechizo/Encantamiento: %s (ID: %s)"
     L["CLOSE"] = "Cerrar"
     L["ENABLED"] = "Activado."
     L["DISABLED"] = "Desactivado."
@@ -54,6 +58,8 @@ elseif GetLocale() == "ptBR" or GetLocale() == "ptPT" then
     L["ITEM_WITH_ID"] = "Item: %s (ID: %s)"
     L["QUEST_NO_ID"] = "Missão: %s"
     L["QUEST_WITH_ID"] = "Missão: %s (ID: %s)"
+    L["SPELL_NO_ID"] = "Feitiço/Encantamento: %s"
+    L["SPELL_WITH_ID"] = "Feitiço/Encantamento: %s (ID: %s)"
     L["CLOSE"] = "Fechar"
     L["ENABLED"] = "Ativado."
     L["DISABLED"] = "Desativado."
@@ -95,6 +101,8 @@ StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"] = {
                     url = "https://database.turtlecraft.gg/?item=" .. tostring(currentID)
                 elseif lookupType == "quest" then
                     url = "https://database.turtlecraft.gg/?quest=" .. tostring(currentID)
+                elseif lookupType == "spell" then
+                    url = "https://database.turtlecraft.gg/?spell=" .. tostring(currentID)
                 else
                     url = "https://database.turtlecraft.gg/?npc=" .. tostring(currentID)
                 end
@@ -175,6 +183,9 @@ function QuickTurtleDBLookUp_ShowPopup()
     elseif lookupType == "quest" then
         id = QuickTurtleDBLookUp_CurrentID or "Unknown"
         name = QuickTurtleDBLookUp_CurrentName or "Unknown Quest"
+    elseif lookupType == "spell" then
+        id = QuickTurtleDBLookUp_CurrentID or "Unknown"
+        name = QuickTurtleDBLookUp_CurrentName or "Unknown Spell"
     else
         if not UnitExists("target") then 
             DebugMsg("No target exists")
@@ -212,6 +223,8 @@ function QuickTurtleDBLookUp_ShowPopup()
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["ITEM_WITH_ID"]
         elseif lookupType == "quest" then
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["QUEST_WITH_ID"]
+        elseif lookupType == "spell" then
+            StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["SPELL_WITH_ID"]
         else
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_WITH_ID"]
         end
@@ -221,6 +234,8 @@ function QuickTurtleDBLookUp_ShowPopup()
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["ITEM_NO_ID"]
         elseif lookupType == "quest" then
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["QUEST_NO_ID"]
+        elseif lookupType == "spell" then
+            StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["SPELL_NO_ID"]
         else
             StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_NO_ID"]
         end
@@ -233,7 +248,7 @@ end
 local QTD_DropDown = CreateFrame("Frame", "QuickTurtleDBLookUp_DropDown", UIParent, "UIDropDownMenuTemplate")
 UIDropDownMenu_Initialize(QTD_DropDown, function()
     local info = {}
-    if QuickTurtleDBLookUp_CurrentType == "item" or QuickTurtleDBLookUp_CurrentType == "quest" then
+    if QuickTurtleDBLookUp_CurrentType == "item" or QuickTurtleDBLookUp_CurrentType == "quest" or QuickTurtleDBLookUp_CurrentType == "spell" then
         info.text = QuickTurtleDBLookUp_CurrentName or "Unknown"
     else
         info.text = UnitName("target") or "Unknown"
@@ -336,6 +351,22 @@ function SetItemRef(link, text, button)
             QuickTurtleDBLookUp_CurrentType = "quest"
             QuickTurtleDBLookUp_CurrentID = tonumber(questId)
             QuickTurtleDBLookUp_CurrentName = questName or "Unknown Quest"
+            ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
+            return
+        elseif string.sub(link, 1, 5) == "spell" then
+            local _, _, spellId = string.find(link, "^spell:(%d+)")
+            local _, _, spellName = string.find(text, "%[(.+)%]")
+            QuickTurtleDBLookUp_CurrentType = "spell"
+            QuickTurtleDBLookUp_CurrentID = tonumber(spellId)
+            QuickTurtleDBLookUp_CurrentName = spellName or "Unknown Spell"
+            ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
+            return
+        elseif string.sub(link, 1, 7) == "enchant" then
+            local _, _, enchantId = string.find(link, "^enchant:(%d+)")
+            local _, _, enchantName = string.find(text, "%[(.+)%]")
+            QuickTurtleDBLookUp_CurrentType = "spell"
+            QuickTurtleDBLookUp_CurrentID = tonumber(enchantId)
+            QuickTurtleDBLookUp_CurrentName = enchantName or "Unknown Enchant"
             ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
             return
         end
