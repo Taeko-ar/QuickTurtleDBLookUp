@@ -1,11 +1,15 @@
 QuickTurtleDBLookUpDB = QuickTurtleDBLookUpDB or { enabled = true, debug = false }
-QuickTurtleDBLookUp_CurrentNPCID = nil
+QuickTurtleDBLookUp_CurrentType = "npc"
+QuickTurtleDBLookUp_CurrentID = nil
+QuickTurtleDBLookUp_CurrentName = nil
 
 local L = {
     ["DB_LOOKUP"] = "Turtle DB Lookup",
     ["CANCEL"] = "Cancel",
     ["NPC_NO_ID"] = "NPC: %s",
     ["NPC_WITH_ID"] = "NPC: %s (ID: %s)",
+    ["ITEM_NO_ID"] = "Item: %s",
+    ["ITEM_WITH_ID"] = "Item: %s (ID: %s)",
     ["CLOSE"] = "Close",
     ["ENABLED"] = "Enabled.",
     ["DISABLED"] = "Disabled.",
@@ -24,6 +28,8 @@ if GetLocale() == "esES" or GetLocale() == "esMX" then
     L["CANCEL"] = "Cancelar"
     L["NPC_NO_ID"] = "PNJ: %s"
     L["NPC_WITH_ID"] = "PNJ: %s (ID: %s)"
+    L["ITEM_NO_ID"] = "Objeto: %s"
+    L["ITEM_WITH_ID"] = "Objeto: %s (ID: %s)"
     L["CLOSE"] = "Cerrar"
     L["ENABLED"] = "Activado."
     L["DISABLED"] = "Desactivado."
@@ -40,6 +46,8 @@ elseif GetLocale() == "ptBR" or GetLocale() == "ptPT" then
     L["CANCEL"] = "Cancelar"
     L["NPC_NO_ID"] = "NPC: %s"
     L["NPC_WITH_ID"] = "NPC: %s (ID: %s)"
+    L["ITEM_NO_ID"] = "Item: %s"
+    L["ITEM_WITH_ID"] = "Item: %s (ID: %s)"
     L["CLOSE"] = "Fechar"
     L["ENABLED"] = "Ativado."
     L["DISABLED"] = "Desativado."
@@ -73,10 +81,17 @@ StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"] = {
         local editBox = getglobal(this:GetName().."EditBox")
         if editBox then
             local url
-            if QuickTurtleDBLookUp_CurrentNPCID and QuickTurtleDBLookUp_CurrentNPCID ~= "Unknown" then
-                url = "https://database.turtlecraft.gg/?npc=" .. tostring(QuickTurtleDBLookUp_CurrentNPCID)
+            local lookupType = QuickTurtleDBLookUp_CurrentType or "npc"
+            local currentID = QuickTurtleDBLookUp_CurrentID
+            
+            if currentID and currentID ~= "Unknown" then
+                if lookupType == "item" then
+                    url = "https://database.turtlecraft.gg/?item=" .. tostring(currentID)
+                else
+                    url = "https://database.turtlecraft.gg/?npc=" .. tostring(currentID)
+                end
             else
-                local nameForUrl = string.gsub(UnitName("target") or "", " ", "+")
+                local nameForUrl = string.gsub(QuickTurtleDBLookUp_CurrentName or "", " ", "+")
                 url = "https://database.turtlecraft.gg/?search=" .. nameForUrl
             end
             editBox:SetText(url)
@@ -142,51 +157,72 @@ function QuickTurtleDBLookUp_ShowPopup()
         DebugMsg("Addon disabled")
         return 
     end
-    if not UnitExists("target") then 
-        DebugMsg("No target exists")
-        return 
-    end
     
-    if UnitIsPlayer("target") then 
-        DebugMsg("Target is player, ignoring")
-        return 
-    end
-
-    local guid = nil
-    if UnitGUID then
-        guid = UnitGUID("target")
-        DebugMsg("Raw GUID from UnitGUID: '" .. tostring(guid) .. "' (length: " .. tostring(guid and string.len(guid) or 0) .. ")")
+    local lookupType = QuickTurtleDBLookUp_CurrentType or "npc"
+    local id, name
+    
+    if lookupType == "item" then
+        id = QuickTurtleDBLookUp_CurrentID or "Unknown"
+        name = QuickTurtleDBLookUp_CurrentName or "Unknown Item"
     else
-        local _, possibleGuid = UnitExists("target")
-        if type(possibleGuid) == "string" then 
-            guid = possibleGuid 
-            DebugMsg("Raw GUID from UnitExists possibleGuid (SuperWoW): '" .. tostring(guid) .. "'")
-        else
-            DebugMsg("No GUID found.")
+        if not UnitExists("target") then 
+            DebugMsg("No target exists")
+            return 
         end
+        
+        if UnitIsPlayer("target") then 
+            DebugMsg("Target is player, ignoring")
+            return 
+        end
+
+        local guid = nil
+        if UnitGUID then
+            guid = UnitGUID("target")
+            DebugMsg("Raw GUID from UnitGUID: '" .. tostring(guid) .. "' (length: " .. tostring(guid and string.len(guid) or 0) .. ")")
+        else
+            local _, possibleGuid = UnitExists("target")
+            if type(possibleGuid) == "string" then 
+                guid = possibleGuid 
+                DebugMsg("Raw GUID from UnitExists possibleGuid (SuperWoW): '" .. tostring(guid) .. "'")
+            else
+                DebugMsg("No GUID found.")
+            end
+        end
+        
+        id = ExtractNPCID(guid)
+        DebugMsg("Final parsed npcID selected: " .. tostring(id))
+        name = UnitName("target") or "Unknown"
+        QuickTurtleDBLookUp_CurrentID = id
+        QuickTurtleDBLookUp_CurrentName = name
     end
     
-    local npcID = ExtractNPCID(guid)
-    DebugMsg("Final parsed npcID selected: " .. tostring(npcID))
-    
-    QuickTurtleDBLookUp_CurrentNPCID = npcID
-    local npcName = UnitName("target") or "Unknown"
-    
-    if npcID ~= "Unknown" then
-        StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_WITH_ID"]
-        StaticPopup_Show("QUICK_TURTLE_DB_LOOKUP", npcName, npcID)
+    if id ~= "Unknown" then
+        if lookupType == "item" then
+            StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["ITEM_WITH_ID"]
+        else
+            StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_WITH_ID"]
+        end
+        StaticPopup_Show("QUICK_TURTLE_DB_LOOKUP", name, id)
     else
-        StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_NO_ID"]
-        StaticPopup_Show("QUICK_TURTLE_DB_LOOKUP", npcName)
+        if lookupType == "item" then
+            StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["ITEM_NO_ID"]
+        else
+            StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"].text = L["NPC_NO_ID"]
+        end
+        StaticPopup_Show("QUICK_TURTLE_DB_LOOKUP", name)
     end
     
-    PrintMsg(L["OPENED_LINK"] .. tostring(npcName))
+    PrintMsg(L["OPENED_LINK"] .. tostring(name))
 end
 
 local QTD_DropDown = CreateFrame("Frame", "QuickTurtleDBLookUp_DropDown", UIParent, "UIDropDownMenuTemplate")
 UIDropDownMenu_Initialize(QTD_DropDown, function()
     local info = {}
-    info.text = UnitName("target") or "Unknown"
+    if QuickTurtleDBLookUp_CurrentType == "item" then
+        info.text = QuickTurtleDBLookUp_CurrentName or "Unknown Item"
+    else
+        info.text = UnitName("target") or "Unknown"
+    end
     info.isTitle = 1
     info.notCheckable = 1
     UIDropDownMenu_AddButton(info)
@@ -230,6 +266,7 @@ local function AttemptHookUIFrame(fNameOrObj, isExplicitTargetFrame)
             end
 
             if isValid then
+                QuickTurtleDBLookUp_CurrentType = "npc"
                 ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
             end
         end
@@ -261,10 +298,28 @@ if TargetFrame_OnClick then
             old_TargetFrame_OnClick(button)
         end
         if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and button == "RightButton" and UnitExists("target") and not UnitIsPlayer("target") then
+            QuickTurtleDBLookUp_CurrentType = "npc"
             ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
         end
     end
 end
+
+local old_SetItemRef = SetItemRef
+function SetItemRef(link, text, button)
+    if QuickTurtleDBLookUpDB and QuickTurtleDBLookUpDB.enabled and button == "RightButton" and string.sub(link, 1, 4) == "item" then
+        local _, _, itemId = string.find(link, "^item:(%d+)")
+        local _, _, itemName = string.find(text, "%[(.+)%]")
+        QuickTurtleDBLookUp_CurrentType = "item"
+        QuickTurtleDBLookUp_CurrentID = tonumber(itemId)
+        QuickTurtleDBLookUp_CurrentName = itemName or "Unknown Item"
+        ToggleDropDownMenu(1, nil, QuickTurtleDBLookUp_DropDown, "cursor", 0, 0)
+        return
+    end
+    if old_SetItemRef then
+        old_SetItemRef(link, text, button)
+    end
+end
+
 
 SLASH_QUICKTURTLEDBLOOKUP1 = "/qdb"
 SLASH_QUICKTURTLEDBLOOKUP2 = "/turtledb"
