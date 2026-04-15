@@ -97,9 +97,11 @@ StaticPopupDialogs["QUICK_TURTLE_DB_LOOKUP"] = {
     text = L["NPC_NO_ID"],
     button1 = L["CLOSE"],
     hasEditBox = 1,
+    maxLetters = 999,
     OnShow = function()
         local editBox = getglobal(this:GetName().."EditBox")
         if editBox then
+            editBox:SetMaxLetters(999)
             local data = this.data
             local url = "https://database.turtlecraft.gg/"
             local lookupType = data and data.type or "npc"
